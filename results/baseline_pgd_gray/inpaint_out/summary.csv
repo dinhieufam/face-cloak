@@ -1,0 +1,4 @@
+branch,eps,n,face_rate,mean_sim,median_sim,mean_sim_input,protection_rate
+clean,0,18,1.0,0.843,0.867,1.0,0.0
+cloak,16,14,1.0,0.696,0.699,0.944,0.0
+random,16,18,1.0,0.767,0.803,0.921,0.0

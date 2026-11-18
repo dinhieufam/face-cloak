@@ -1,0 +1,6 @@
+# E1: change the target image. Pull the latent towards a dense high-contrast pattern instead of flat gray.
+# Question: does a structured target destroy identity better than washing the face out?
+inherits: ../base.yaml
+exp_name: E1_pattern_target
+cloak:
+  target: assets/targets/pattern.png

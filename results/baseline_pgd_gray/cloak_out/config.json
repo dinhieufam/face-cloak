@@ -1,0 +1,26 @@
+{
+  "MODEL_ID": "stable-diffusion-v1-5/stable-diffusion-inpainting",
+  "IMG_SIZE": 512,
+  "EPS_LIST": [
+    8,
+    16,
+    32
+  ],
+  "N_ITERS": 200,
+  "STEP_FRAC": 0.125,
+  "RANDOM_INIT": true,
+  "TARGET": "gray",
+  "USE_FP16": true,
+  "SAVE_RANDOM_BASELINE": true,
+  "SEED": 0,
+  "KAGGLE_DATASET": "arnaud58/flickrfaceshq-dataset-ffhq",
+  "FFHQ_IDS": [
+    "00004"
+  ],
+  "N_FFHQ_RANDOM": 34,
+  "FFHQ_ID_RANGE": [
+    0,
+    50000
+  ],
+  "attack": "PGD encoder attack (PhotoGuard-style), mask-agnostic, L_inf, best iterate, uint8 quantized"
+}

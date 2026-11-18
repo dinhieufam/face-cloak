@@ -1,0 +1,5 @@
+# E3: change the optimiser. Momentum PGD (MI-FGSM): g <- 0.9 g + grad / mean|grad|, step along sign(g).
+inherits: ../base.yaml
+exp_name: E3_momentum
+cloak:
+  momentum: 0.9

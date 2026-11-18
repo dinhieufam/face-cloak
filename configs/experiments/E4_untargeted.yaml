@@ -1,0 +1,6 @@
+# E4: no target. Push the latent away from the clean latent: maximise ||E(x+δ) - E(x)||².
+# loss_ratio_* columns are NaN here; compare latent_dist_cloak (higher = further from clean) instead.
+inherits: ../base.yaml
+exp_name: E4_untargeted
+cloak:
+  untargeted: true

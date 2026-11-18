@@ -1,0 +1,6 @@
+# E0: PhotoGuard baseline re-run (PGD 200 iterations, gray target, full-image loss) on the 10 dev images.
+# Every other experiment is compared against this one.
+inherits: ../base.yaml
+exp_name: E0_baseline
+inpaint:
+  include_random: true       # random-noise control is only needed once

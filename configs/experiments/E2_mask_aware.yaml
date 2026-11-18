@@ -1,0 +1,8 @@
+# E2: optimise what the attacker's VAE actually sees: the face on a mid-gray background
+# (diffusers: masked_image = image * (mask < 0.5) in [-1,1]), with the mask randomly dilated/eroded
+# by up to 10 px every step so the cloak does not depend on one exact mask.
+inherits: ../base.yaml
+exp_name: E2_mask_aware
+cloak:
+  mask_aware: true
+  mask_jitter_px: 10

@@ -1,0 +1,25 @@
+# Experiment outputs (local runs; Colab writes to Google Drive)
+runs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Caches / OS / editors
+.cache/
+.DS_Store
+.vscode/
+.idea/
+
+# Credentials
+kaggle.json
+.env

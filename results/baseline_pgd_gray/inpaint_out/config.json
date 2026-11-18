@@ -1,0 +1,27 @@
+{
+  "CLOAK_OUT_DIR": "/content/drive/MyDrive/CRPII/cloak_out",
+  "EPS_TO_USE": null,
+  "INCLUDE_RANDOM": true,
+  "FACE_DILATE_PX": 0,
+  "MODEL_ID": "stable-diffusion-v1-5/stable-diffusion-inpainting",
+  "PROMPTS": [
+    "a person standing outdoors in a park, natural lighting, photorealistic",
+    "a person in a police station, wearing an orange prison jumpsuit, photorealistic",
+    "a person at a nightclub at night, flash photography, photorealistic"
+  ],
+  "NEGATIVE_PROMPT": "blurry, deformed, extra limbs, bad anatomy",
+  "SEEDS": [
+    0,
+    1,
+    2
+  ],
+  "NUM_STEPS": 30,
+  "GUIDANCE": 7.5,
+  "KEEP_SAFETY_CHECKER": true,
+  "DETECTOR": "retinaface_r50",
+  "RECOGNIZER": "arcface_resnet",
+  "TAU_RULE": "far1",
+  "TAU": -0.018277591094374657,
+  "tau_far1": -0.018277591094374657,
+  "tau_eer": 0.695314347743988
+}

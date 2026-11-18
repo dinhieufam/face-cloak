@@ -1,0 +1,65 @@
+# Shared protocol for every experiment. Experiment files (configs/experiments/*.yaml) inherit this
+# and override ONLY the key(s) they change. CLI overrides: `cloak.n_iters=50 quick_test=true`.
+# Relative paths are resolved against the repository root.
+
+exp_name: base
+quick_test: false            # 2 images, largest ε, 50 PGD iterations, 1 prompt, 1 seed; writes to <exp>_quick/
+
+paths:
+  output_root: null          # null = auto: Colab -> /content/drive/MyDrive/CRPII/exp, local -> ./runs
+                             # (env var FACECLOAK_OUTPUT_ROOT overrides both)
+
+data:
+  kaggle_dataset: arnaud58/flickrfaceshq-dataset-ffhq
+  ids_file: data/dev_ids.txt # fixed 10-image dev set used by every experiment
+  ffhq_ids: null             # explicit list of FFHQ ids, overrides ids_file
+  n_ffhq_random: 0           # extra random FFHQ ids (drawn with cloak.seed from ffhq_id_range)
+  ffhq_id_range: [0, 50000]
+  selfie_paths: []           # local selfie files (jpg/png)
+  max_images: null
+  img_size: 512
+
+model:
+  id: stable-diffusion-v1-5/stable-diffusion-inpainting   # the attacker's pipeline; we attack its VAE
+  fp16: true                 # fp16 autocast on CUDA (ignored on CPU/MPS). Set false if losses become NaN.
+
+cloak:
+  eps: [16]                  # L∞ budgets in 1/255 units on the [0,1] pixel scale
+  n_iters: 200
+  step_frac: 0.125           # α = step_frac·ε, halved at 50% and again at 75% of the iterations
+  random_init: true          # start from U[-ε, ε]
+  seed: 0
+  batch_size: auto           # auto: T4 -> 4, A5000 -> 8 (halved automatically on out-of-memory)
+  save_random_baseline: true # also save random ±ε noise with the same budget
+  # ---- method knobs (defaults = PhotoGuard baseline) ----
+  target: gray               # "gray" (flat 0.5 image) or a path to a target image          (E1)
+  mask_aware: false          # optimise attacker_view(x+δ, face mask) instead of x+δ        (E2)
+  mask_jitter_px: 0          # random dilate/erode of the mask each step (needs mask_aware) (E2)
+  momentum: 0.0              # >0 enables MI-FGSM with this decay, e.g. 0.9                 (E3)
+  untargeted: false          # maximise ‖E(x+δ) − E(x)‖² instead of pulling to a target      (E4)
+
+mask:
+  dilate_px: 0               # grow the kept face region by N px (0 = exact MediaPipe FACE_OVAL)
+  min_face_conf: 0.3
+  landmarker_url: https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task
+
+inpaint:
+  prompts:
+    - "a person standing outdoors in a park, natural lighting, photorealistic"
+    - "a person in a police station, wearing an orange prison jumpsuit, photorealistic"
+    - "a person at a nightclub at night, flash photography, photorealistic"
+  prompt_ids: [0]            # prompt 0 is the one the safety checker flags least
+  seeds: [0, 1]
+  negative_prompt: "blurry, deformed, extra limbs, bad anatomy"
+  num_steps: 30
+  guidance: 7.5
+  keep_safety_checker: true  # flagged (blacked-out) outputs are recorded and EXCLUDED from metrics
+  include_random: false      # evaluate the random-noise control branch (on in E0; outputs are cached and shared)
+  eps: null                  # null = every ε in the manifest
+
+eval:
+  detector: retinaface_r50   # UniFace RetinaFace weights
+  recognizer: arcface_resnet # UniFace ArcFace weights
+  det_conf: 0.5
+  tau_rule: fixed            # fixed (eval.tau or <output_root>/tau.json) | far1 | eer
+  tau: null
