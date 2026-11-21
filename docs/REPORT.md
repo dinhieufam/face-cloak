@@ -32,8 +32,7 @@ Archived in `results/baseline_pgd_gray/` (notebooks in `notebooks/legacy/`). Not
 - **Method.**
   - **Cloak:** PGD pulls the VAE latent of the photo toward the latent of a flat gray image, with the loss on the
     full image.
-  - **Attack and evaluation:** SD 1.5 inpainting keeps the MediaPipe face oval. UniFace RetinaFace + ArcFace
-    measure the similarity.
+  - **Attack and evaluation:** SD 1.5 inpainting keeps the MediaPipe face oval. UniFace measure the similarity.
   - **Scale:** 2 images × 3 prompts × 3 seeds
     = 54 edits, on a Colab T4.
 - **Result.**
