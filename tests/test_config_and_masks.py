@@ -20,8 +20,13 @@ def test_every_experiment_config_loads(path):
 
 
 def test_experiments_change_one_knob_each():
+    """E* = single-change experiments vs. base.yaml. C* = documented combinations of E* winners (exempt)."""
     base = load_config(REPO / "configs" / "base.yaml")["cloak"]
     for path in EXPS:
+        if path.stem.startswith("C"):
+            assert "combin" in path.read_text().split("\n", 1)[0].lower(), f"{path.stem}: say what it combines"
+            continue
+        assert path.stem.startswith("E"), path.stem
         diff = {k for k, v in load_config(path)["cloak"].items() if base[k] != v}
         assert len(diff) <= 2, (path.stem, diff)  # E2 sets mask_aware + its jitter
 
@@ -39,11 +44,10 @@ def test_overrides_and_quick_test(tmp_path, monkeypatch):
 
 def test_colab_and_local_roots(monkeypatch):
     monkeypatch.delenv("FACECLOAK_OUTPUT_ROOT", raising=False)
-    monkeypatch.setenv("FACECLOAK_ENV", "colab")
     cfg = load_config(REPO / "configs/experiments/E0_baseline.yaml")
-    assert str(get_paths(cfg).root) == "/content/drive/MyDrive/CRPII/exp"
-    monkeypatch.setenv("FACECLOAK_ENV", "local")
-    assert get_paths(cfg).root == REPO / "runs"
+    for where in ("colab", "local"):  # Colab clones the repo, so outputs land in <repo>/runs there too
+        monkeypatch.setenv("FACECLOAK_ENV", where)
+        assert get_paths(cfg).root == REPO / "runs"
 
 
 def test_attacker_view_is_mid_gray_outside_face():

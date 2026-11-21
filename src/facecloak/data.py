@@ -69,10 +69,35 @@ def read_ids(path: str) -> list[str]:
         return [ln.strip() for ln in f if ln.strip() and not ln.startswith("#")]
 
 
-def fetch_ffhq(kaggle_dataset: str, file_id: str) -> str:
-    """Download a single FFHQ file (kagglehub fetches only the requested file)."""
+def fetch_ffhq(kaggle_dataset: str, file_id: str, timeout: float = 90.0, retries: int = 3) -> str:
+    """Download a single FFHQ file (kagglehub fetches only the requested file).
+
+    kagglehub's HTTP calls have no timeout and occasionally hang forever, so each attempt runs in a daemon
+    thread that is abandoned after `timeout` seconds; then it retries (TimeoutError after `retries` attempts).
+    """
+    import threading
+
     import kagglehub
-    return kagglehub.dataset_download(kaggle_dataset, path=f"{file_id}.png")
+    last = None
+    for attempt in range(1, retries + 1):
+        box: dict = {}
+
+        def work():
+            try:
+                box["path"] = kagglehub.dataset_download(kaggle_dataset, path=f"{file_id}.png")
+            except BaseException as e:  # re-raised in the caller
+                box["err"] = e
+
+        t = threading.Thread(target=work, daemon=True)  # daemon: a hung download never blocks interpreter exit
+        t.start()
+        t.join(timeout)
+        if "path" in box:
+            return box["path"]
+        if "err" in box:
+            raise box["err"]
+        last = TimeoutError(f"{file_id}.png: no response in {timeout:.0f}s (attempt {attempt}/{retries})")
+        print(f"  ! {last}")
+    raise last
 
 
 def _register(paths: Paths, img_id: str, source: str, size: int, src_path=None, original="") -> dict:

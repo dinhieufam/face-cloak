@@ -1,0 +1,7 @@
+# E5: optimise identity directly instead of a latent proxy. Minimise the cosine similarity between FaceNet
+# (VGGFace2) embeddings of the face after the inpainting VAE round trip, crop(D(E(x+δ))), and of the clean face.
+# FaceNet is a different model from the UniFace ArcFace evaluator, so a low sim measures transfer.
+inherits: ../base.yaml
+exp_name: E5_identity
+cloak:
+  loss: identity

@@ -11,6 +11,7 @@ Each output PNG has a sidecar JSON with its safety-checker flag, so generations.
 """
 from __future__ import annotations
 
+import io
 import json
 import time
 from pathlib import Path
@@ -50,6 +51,16 @@ def output_path(paths: Paths, v, pid: int, seed: int) -> Path:
     return base / "outputs" / v.img_id / tag / f"p{pid}_s{seed}.png"
 
 
+def jpeg(image: Image.Image, quality: int | None) -> Image.Image:
+    """Re-encode as JPEG (robustness check: the platform recompresses the upload before the attacker gets it)."""
+    if quality is None:
+        return image
+    buf = io.BytesIO()
+    image.save(buf, format="JPEG", quality=int(quality))
+    buf.seek(0)
+    return Image.open(buf).convert("RGB")
+
+
 def load_pipeline(cfg: dict, device: str):
     from diffusers import StableDiffusionInpaintPipeline
     extra = {} if cfg["inpaint"]["keep_safety_checker"] else dict(safety_checker=None, requires_safety_checker=False)
@@ -61,7 +72,6 @@ def load_pipeline(cfg: dict, device: str):
 
 def run_inpaint(cfg: dict) -> pd.DataFrame:
     ic, paths = cfg["inpaint"], get_paths(cfg)
-    env.mount_drive_if_needed(str(paths.root))
     device = env.get_device()
     print(env.describe())
     paths.inpaint_dir.mkdir(parents=True, exist_ok=True)
@@ -89,7 +99,7 @@ def run_inpaint(cfg: dict) -> pd.DataFrame:
         pipe = load_pipeline(cfg, device)
         t0, done_now = time.time(), 0
         for k, (v, pid, miss) in enumerate(jobs):
-            image = Image.open(paths.abs(v.input_path)).convert("RGB")
+            image = jpeg(Image.open(paths.abs(v.input_path)).convert("RGB"), ic.get("jpeg_quality"))
             mask = Image.open(masks[v.img_id]["inpaint"]).convert("L")
             W, H = image.size
             # one generator per seed: seed s gives the same image alone or in a batch, in every branch

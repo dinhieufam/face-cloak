@@ -1,0 +1,7 @@
+# Phase 3: one change each vs. base.yaml (run after E0 so the _shared clean/random cache exists)
+configs/experiments/E1_pattern_target.yaml
+configs/experiments/E2_mask_aware.yaml
+configs/experiments/E3_momentum.yaml
+configs/experiments/E4_untargeted.yaml
+configs/experiments/E1b_checker_target.yaml
+configs/experiments/E5_identity.yaml

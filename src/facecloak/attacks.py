@@ -8,6 +8,8 @@ Variants, all switched by keyword arguments (defaults reproduce the original not
     mask_jitter_px  random dilate/erode of that mask every step (EOT over the attacker's mask)   (E2)
     momentum      MI-FGSM: g ← μ·g + ∇/mean|∇|, step along sign(g)                             (E3)
     untargeted    maximise ‖E(x+δ) − E(x)‖² instead (caller passes z_tgt = E(x))                (E4)
+    objective     any per-image loss f(x_in) to minimise instead of the latent distance, e.g. the
+                  identity loss of facecloak.identity (E5); `encode`/`z_tgt` are then unused
 """
 from __future__ import annotations
 
@@ -56,7 +58,8 @@ def latent_mse(z: torch.Tensor, z_tgt: torch.Tensor) -> torch.Tensor:
 def pgd_encoder_attack(encode: Encoder, x: torch.Tensor, z_tgt: torch.Tensor, eps: float, n_iters: int,
                        step_frac: float, init: torch.Tensor | None = None, *, mask: torch.Tensor | None = None,
                        mask_jitter_px: int = 0, momentum: float = 0.0, untargeted: bool = False,
-                       rng: random.Random | None = None):
+                       rng: random.Random | None = None,
+                       objective: Callable[[torch.Tensor], torch.Tensor] | None = None):
     """Sign-PGD with L∞ budget `eps` (on the [0,1] scale).
 
     x: (B,3,H,W) in [0,1]. init: U[-1,1] noise of x's shape (scaled by eps) or None for zero init.
@@ -64,10 +67,12 @@ def pgd_encoder_attack(encode: Encoder, x: torch.Tensor, z_tgt: torch.Tensor, ep
     For the backward pass the per-image *sum* of squared errors is used: only the sign of the gradient matters
     and the sum keeps fp16 gradients from underflowing.
 
-    Returns (best δ (B,3,H,W), history (n_iters+1, B) of the latent MSE to z_tgt).
+    Returns (best δ (B,3,H,W), history (n_iters+1, B) of the latent MSE to z_tgt, or of `objective`).
     With `mask` + jitter, the gradient uses a jittered mask but the final evaluation uses the true mask.
     """
     alpha0 = step_frac * eps
+    if objective is not None and untargeted:
+        raise ValueError("objective and untargeted are mutually exclusive")
     sgn = -1.0 if untargeted else 1.0          # untargeted: minimise −distance
     if untargeted and init is None:
         # ‖E(x+δ) − E(x)‖² has exactly zero gradient at δ = 0, so start from a small random point
@@ -86,9 +91,14 @@ def pgd_encoder_attack(encode: Encoder, x: torch.Tensor, z_tgt: torch.Tensor, ep
             if mask is not None:
                 m = mask if last else jitter_mask(mask, mask_jitter_px, rng)
                 x_in = attacker_view(x_in, m)
-            z = encode(x_in)
-            sq = ((z - z_tgt) ** 2).flatten(1)
-            dist = sq.mean(1)
+            if objective is not None:
+                dist = objective(x_in)              # per-image loss to minimise
+                total = dist.sum()
+            else:
+                z = encode(x_in)
+                sq = ((z - z_tgt) ** 2).flatten(1)
+                dist = sq.mean(1)
+                total = sq.sum()
             loss = sgn * dist
         if torch.isnan(loss).any():
             raise RuntimeError("NaN latent loss: set model.fp16=false and re-run.")
@@ -100,7 +110,7 @@ def pgd_encoder_attack(encode: Encoder, x: torch.Tensor, z_tgt: torch.Tensor, ep
             history.append(dist.detach().cpu())
         if last:
             break
-        grad, = torch.autograd.grad(sgn * sq.sum(), delta)
+        grad, = torch.autograd.grad(sgn * total, delta)
         if g is not None:
             g = momentum * g + grad / grad.abs().mean(dim=(1, 2, 3), keepdim=True).clamp_min(1e-12)
             step = g.sign()

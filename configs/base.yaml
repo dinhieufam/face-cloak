@@ -6,8 +6,7 @@ exp_name: base
 quick_test: false            # 2 images, largest ε, 50 PGD iterations, 1 prompt, 1 seed; writes to <exp>_quick/
 
 paths:
-  output_root: null          # null = auto: Colab -> /content/drive/MyDrive/CRPII/exp, local -> ./runs
-                             # (env var FACECLOAK_OUTPUT_ROOT overrides both)
+  output_root: null          # null = <repo>/runs (Colab and local alike); env var FACECLOAK_OUTPUT_ROOT overrides it
 
 data:
   kaggle_dataset: arnaud58/flickrfaceshq-dataset-ffhq
@@ -37,6 +36,8 @@ cloak:
   mask_jitter_px: 0          # random dilate/erode of the mask each step (needs mask_aware) (E2)
   momentum: 0.0              # >0 enables MI-FGSM with this decay, e.g. 0.9                 (E3)
   untargeted: false          # maximise ‖E(x+δ) − E(x)‖² instead of pulling to a target      (E4)
+  loss: latent               # "latent" (pull/push the VAE latent) or "identity" (face cosine after D(E(·))) (E5)
+  id_model: facenet_vggface2 # differentiable surrogate recognizer for loss=identity (≠ the ArcFace evaluator)
 
 mask:
   dilate_px: 0               # grow the kept face region by N px (0 = exact MediaPipe FACE_OVAL)
@@ -56,10 +57,12 @@ inpaint:
   keep_safety_checker: true  # flagged (blacked-out) outputs are recorded and EXCLUDED from metrics
   include_random: false      # evaluate the random-noise control branch (on in E0; outputs are cached and shared)
   eps: null                  # null = every ε in the manifest
+  jpeg_quality: null         # robustness: JPEG-recompress every branch's input before the attacker (e.g. 75)
 
 eval:
   detector: retinaface_r50   # UniFace RetinaFace weights
   recognizer: arcface_resnet # UniFace ArcFace weights
   det_conf: 0.5
   tau_rule: fixed            # fixed (eval.tau or <output_root>/tau.json) | far1 | eer
-  tau: null
+  tau: 0.1493               # fixed τ = FAR 1% on 300 held-out FFHQ faces (44,850 impostor pairs; impostor mean 0.002,
+                             # max 0.403), scripts/calibrate_tau.py seed 123 -> data/tau_calibration.json. Do not re-estimate.

@@ -1,0 +1,8 @@
+# C2 (combination of Phase 3/4 winners): E5 identity loss + E2 attacker's view with ±10 px mask jitter.
+# Not a single-change experiment: compare with each component's E* row and with E0.
+inherits: ../base.yaml
+exp_name: C2_identity_maskaware
+cloak:
+  loss: identity
+  mask_aware: true
+  mask_jitter_px: 10

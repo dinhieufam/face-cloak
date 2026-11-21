@@ -14,7 +14,6 @@ import random
 import numpy as np
 from PIL import Image
 
-from facecloak import env
 from facecloak.config import get_paths, load_config, resolve_path
 from facecloak.data import fetch_ffhq, read_ids, to_square
 from facecloak.evaluate import face_embed, get_face_models
@@ -29,7 +28,6 @@ if __name__ == "__main__":
 
     cfg = load_config(args.config)
     paths, ec, dc = get_paths(cfg), cfg["eval"], cfg["data"]
-    env.mount_drive_if_needed(str(paths.root))
     cache = paths.shared / "tau_images"
     cache.mkdir(parents=True, exist_ok=True)
     dev = {f"{int(i):05d}" for i in read_ids(resolve_path(cfg, dc["ids_file"]))} if dc.get("ids_file") else set()

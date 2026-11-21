@@ -22,7 +22,7 @@ clean.png ─► Stage 1: cloak (PGD on the SD VAE encoder) ─► cloak.png
 ## Quickstart
 
 **Google Colab (T4):** open [`notebooks/colab_quickstart.ipynb`](notebooks/colab_quickstart.ipynb) in Colab,
-choose `EXP`, and run all cells. Results are written to Google Drive under `MyDrive/CRPII/exp/`.
+choose `EXP`, and run all cells. Results are written to `runs/` inside the cloned repo; the last cell zips them for download.
 
 **Local GPU workstation (e.g. NVIDIA A5000):**
 
@@ -31,7 +31,7 @@ git clone https://github.com/dinhieufam/face-cloak.git && cd face-cloak
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[eval,dev]"
 
-python scripts/calibrate_tau.py --config configs/base.yaml                       # once: fixed threshold τ
+# τ is already fixed in configs/base.yaml (eval.tau = 0.1493, from scripts/calibrate_tau.py)
 python scripts/run_experiment.py --config configs/experiments/E0_baseline.yaml   # cloak -> inpaint -> eval
 python scripts/compare_experiments.py                                            # table across experiments
 ```
@@ -54,6 +54,8 @@ Every experiment is a small YAML file that inherits [`configs/base.yaml`](config
 | E5 | (planned) | identity loss through the VAE | Optimise the metric we evaluate on |
 
 Protocol and results table: [docs/experiments.md](docs/experiments.md).
+Full report (method, results, robustness, threat model, limitations): [docs/REPORT.md](docs/REPORT.md),
+regenerated from `runs/` by `python scripts/make_report.py`.
 Current baseline numbers and their caveats: [docs/baseline_results.md](docs/baseline_results.md).
 
 ## Repository layout
@@ -72,7 +74,7 @@ notebooks/               colab_quickstart.ipynb; legacy/ holds the original expl
 data/dev_ids.txt         the fixed 10-image FFHQ dev set
 assets/targets/          target images for E1
 results/                 archived results (baseline snapshot from the legacy notebooks)
-docs/                    setup, pipeline, experiments, baseline results
+docs/                    REPORT, setup, pipeline, experiments, baseline results
 tests/                   CPU unit tests (pytest), no model downloads
 ```
 

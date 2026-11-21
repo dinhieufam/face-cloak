@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from . import env, viz
+from . import viz
 from .config import Paths, dump, get_paths
 
 _MODELS = None
@@ -100,7 +100,6 @@ def resolve_tau(cfg: dict, paths: Paths, impostor: np.ndarray, genuine: np.ndarr
 
 def run_eval(cfg: dict) -> dict:
     ec, paths = cfg["eval"], get_paths(cfg)
-    env.mount_drive_if_needed(str(paths.root))
     gens = pd.read_csv(paths.inpaint_dir / "generations.csv")
     models = get_face_models(ec["detector"], ec["recognizer"], ec["det_conf"])
     out_dir = paths.inpaint_dir
@@ -179,7 +178,8 @@ def compare_experiments(root, exps=None) -> pd.DataFrame:
     """One row per (experiment, branch, ε): the results table of docs/experiments.md."""
     root = Path(root)
     exps = exps or sorted(p.name for p in root.iterdir()
-                          if p.is_dir() and not p.name.startswith("_") and (p / "inpaint_out" / "summary.csv").exists())
+                          if p.is_dir() and not p.name.startswith("_") and not p.name.endswith("_quick")
+                          and (p / "inpaint_out" / "summary.csv").exists())
     tables = []
     for exp in exps:
         d = root / exp

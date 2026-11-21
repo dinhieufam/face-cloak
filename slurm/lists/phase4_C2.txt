@@ -1,0 +1,6 @@
+# Phase 4: robustness of the best method C2 (same variants as E0/E5)
+configs/experiments/C2_identity_maskaware.yaml exp_name=R_C2_prompts12 inpaint.prompt_ids=[1,2] inpaint.include_random=true 
+configs/experiments/C2_identity_maskaware.yaml exp_name=R_C2_seeds4 inpaint.seeds=[0,1,2,3] inpaint.include_random=true 
+configs/experiments/C2_identity_maskaware.yaml exp_name=R_C2_dilate10 mask.dilate_px=10 inpaint.include_random=true 
+configs/experiments/C2_identity_maskaware.yaml exp_name=R_C2_eps8 cloak.eps=[8,16] inpaint.include_random=true 
+configs/experiments/C2_identity_maskaware.yaml exp_name=R_C2_jpeg75 inpaint.jpeg_quality=75 inpaint.include_random=true 

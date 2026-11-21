@@ -1,0 +1,7 @@
+# C1 (combination of Phase 3/4 winners): E5 identity loss + E3 momentum PGD (μ = 0.9).
+# Not a single-change experiment: compare with each component's E* row and with E0.
+inherits: ../base.yaml
+exp_name: C1_identity_momentum
+cloak:
+  loss: identity
+  momentum: 0.9

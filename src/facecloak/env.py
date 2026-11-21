@@ -1,7 +1,7 @@
 """Runtime environment: Colab vs. local workstation, device, mixed precision, batch size.
 
-The same code path runs on a Colab T4 and on a local NVIDIA A5000. Only two things differ and both are
-auto-detected here: where outputs go (Google Drive vs. ./runs) and how many images fit in one PGD batch.
+The same code path runs on a Colab T4 and on a local NVIDIA A5000. Outputs always go to <repo>/runs (on Colab the
+repo is cloned to /content/face-cloak); the only difference auto-detected here is how many images fit in one PGD batch.
 """
 from __future__ import annotations
 
@@ -9,9 +9,6 @@ import contextlib
 import os
 
 import torch
-
-COLAB_OUTPUT_ROOT = "/content/drive/MyDrive/CRPII/exp"
-
 
 def in_colab() -> bool:
     """True inside Google Colab. `FACECLOAK_ENV=colab|local` forces the answer (useful for testing)."""
@@ -64,13 +61,3 @@ def describe() -> str:
     return (f"env={'colab' if in_colab() else 'local'} | device={dev} | gpu={gpu} "
             f"({gpu_memory_gb():.0f} GB) | torch={torch.__version__}")
 
-
-def mount_drive_if_needed(path: str) -> None:
-    """Mount Google Drive when running in Colab and `path` lives on it. No-op elsewhere."""
-    if not str(path).startswith("/content/drive") or os.path.ismount("/content/drive"):
-        return
-    try:
-        from google.colab import drive
-    except ImportError:
-        return
-    drive.mount("/content/drive")

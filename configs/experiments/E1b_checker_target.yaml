@@ -1,0 +1,5 @@
+# E1b (side ablation of E1): the simplest high-frequency target, a pure black/white 8-px checkerboard.
+inherits: ../base.yaml
+exp_name: E1b_checker_target
+cloak:
+  target: assets/targets/checker8.png

@@ -26,15 +26,18 @@ def _save(fig, out) -> None:
     plt.close(fig)
 
 
-def plot_convergence(histories: dict, out, untargeted: bool = False) -> None:
-    """histories: {"eps16": (iters+1, n_images) array of latent MSE to the target}."""
+def plot_convergence(histories: dict, out, untargeted: bool = False, identity: bool = False) -> None:
+    """histories: {"eps16": (iters+1, n_images) array of latent MSE to the target, or of the identity cosine}."""
     fig = plt.figure(figsize=(6, 3.5))
     for name, h in sorted(histories.items()):
-        h = h / h[0:1]  # normalise each image by its value at the start
+        if not identity:
+            h = h / h[0:1]  # normalise each image by its value at the start
         plt.plot(h.mean(1), label=name.replace("eps", "ε=") + "/255")
-    plt.yscale("log")
+    if not identity:
+        plt.yscale("log")
     plt.xlabel("PGD iteration")
-    plt.ylabel("latent distance to clean / initial" if untargeted else "latent loss / initial (mean)")
+    plt.ylabel("surrogate face cosine to clean (mean)" if identity else
+               "latent distance to clean / initial" if untargeted else "latent loss / initial (mean)")
     plt.title("PGD convergence")
     plt.legend()
     plt.grid(alpha=.3)

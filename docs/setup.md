@@ -5,13 +5,13 @@ automatically in `src/facecloak/env.py`:
 
 | | Colab (T4, 15 GB) | Local workstation (A5000, 24 GB) |
 |---|---|---|
-| Output root | `/content/drive/MyDrive/CRPII/exp` (Drive is mounted for you) | `<repo>/runs` |
+| Output root | `/content/face-cloak/runs` (= `<repo>/runs`; zip it before the runtime is recycled) | `<repo>/runs` |
 | PGD batch size (`cloak.batch_size: auto`) | 4 | 8 |
 | Precision | fp16 autocast on CUDA | fp16 autocast on CUDA |
 
 Override the output root with `paths.output_root=/some/dir` on the command line, or with the environment
-variable `FACECLOAK_OUTPUT_ROOT`. To make a workstation write into the same folder as the team, point it at a
-synced copy of the Drive folder. CPU and Apple-Silicon (MPS) machines also work, in fp32 and much more slowly,
+variable `FACECLOAK_OUTPUT_ROOT`. Results stay comparable across machines because everything that defines a run
+is in git: the configs and the fixed identity threshold `eval.tau` in `configs/base.yaml`. CPU and Apple-Silicon (MPS) machines also work, in fp32 and much more slowly,
 which is enough for debugging.
 
 ## Google Colab
@@ -30,8 +30,13 @@ git clone https://github.com/dinhieufam/face-cloak.git && cd face-cloak
 python -m venv .venv && source .venv/bin/activate      # or: conda create -n facecloak python=3.11
 pip install torch --index-url https://download.pytorch.org/whl/cu124   # match your CUDA driver
 pip install -e ".[eval,dev]"
-pytest                                                   # CPU unit tests, ~2 s
+pip install --no-deps facenet-pytorch                    # E5 only: its pins conflict with current torch
+pytest                                                   # CPU unit tests
 ```
+
+On a Slurm cluster, `slurm/run_experiment.sbatch <config> [k=v ...]` runs one experiment on one GPU and
+`slurm/run_array.sbatch <list.txt>` runs one line of a list per array task (`--array=1-N%2`). Both source
+`slurm/env.sh`, which sets the env path and keeps caches off `/home` (`HF_HOME`, `KAGGLEHUB_CACHE`, `TORCH_HOME`).
 
 `[eval]` installs `uniface[gpu]`, which pulls `onnxruntime-gpu`. That needs CUDA 12 and cuDNN 9; the CUDA wheels
 of PyTorch ship both. If UniFace reports that it runs on CPU, evaluation still works (about 0.1–0.3 s per image).
@@ -52,8 +57,11 @@ Long runs over SSH: use `tmux` or `nohup ... &`. Every stage resumes from what i
 ## Running
 
 ```bash
-# Step 0, once: fixed identity threshold τ from ~300 FFHQ faces -> <output_root>/tau.json
-python scripts/calibrate_tau.py --config configs/base.yaml
+# Step 0 is done: τ = 0.1493 is fixed in configs/base.yaml (eval.tau). Only re-run to reproduce it:
+# python scripts/calibrate_tau.py --config configs/base.yaml     # -> <output_root>/tau.json
+
+# report: every table/figure + the report draft from runs/ -> <output_root>/report/
+python scripts/make_report.py
 
 # a whole experiment, or stage by stage
 python scripts/run_experiment.py   --config configs/experiments/E1_pattern_target.yaml
@@ -77,7 +85,8 @@ python scripts/compare_experiments.py
 
 ```
 <output_root>/
-  tau.json                              fixed τ (Step 0)
+  tau.json                              output of calibrate_tau.py (the value used is eval.tau in base.yaml)
+  report/                               make_report.py: tables/, figures/, report.md
   comparison.csv                        scripts/compare_experiments.py
   _shared/images/<img_id>/clean.png     512×512 preprocessed inputs (all experiments)
   _shared/masks/dilate<d>/              <id>_face.png (white = keep), <id>_inpaint.png (white = regenerate)
@@ -96,6 +105,7 @@ All paths stored in CSVs are relative to `<output_root>`, so a run folder can be
 | Symptom | Fix |
 |---|---|
 | `NaN latent loss` | `model.fp16=false` (slower, fp32) |
+| A Kaggle download hangs | Each file is retried after 90 s (`fetch_ffhq`); persistent failures are skipped and logged |
 | CUDA out of memory in Stage 1 | Handled automatically: the batch size is halved and the batch retried. Or set `cloak.batch_size=2`. |
 | A config change seems to have no effect | Both stages skip work that is already on disk. Give the run a new `exp_name`, or delete `<exp>/`. |
 | Many black outputs | The safety checker flagged them. They are excluded from metrics and reported as `nsfw_rate`. Prompt 0 is flagged least. |

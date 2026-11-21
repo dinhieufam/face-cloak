@@ -14,9 +14,6 @@ from pathlib import Path
 
 import yaml
 
-from . import env
-
-
 def deep_merge(base: dict, override: dict) -> dict:
     out = copy.deepcopy(base)
     for k, v in override.items():
@@ -154,12 +151,13 @@ def inpaint_settings_key(cfg: dict) -> str:
     keyed = dict(model=cfg["model"]["id"], neg=ic["negative_prompt"], steps=ic["num_steps"],
                  guidance=ic["guidance"], safety=ic["keep_safety_checker"], prompts=ic["prompts"],
                  dilate=cfg["mask"]["dilate_px"])
+    if ic.get("jpeg_quality") is not None:  # only when set, so existing caches keep their hash
+        keyed["jpeg"] = int(ic["jpeg_quality"])
     return hashlib.sha1(json.dumps(keyed, sort_keys=True).encode()).hexdigest()[:8]
 
 
 def get_paths(cfg: dict) -> Paths:
-    root = (os.environ.get("FACECLOAK_OUTPUT_ROOT") or cfg["paths"].get("output_root")
-            or (env.COLAB_OUTPUT_ROOT if env.in_colab() else "runs"))  # relative -> <repo>/runs
+    root = os.environ.get("FACECLOAK_OUTPUT_ROOT") or cfg["paths"].get("output_root") or "runs"  # -> <repo>/runs
     return Paths(root=Path(resolve_path(cfg, root)), exp=cfg["exp_name"], dilate_px=int(cfg["mask"]["dilate_px"]),
                  inpaint_key=inpaint_settings_key(cfg))
 

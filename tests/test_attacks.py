@@ -96,3 +96,37 @@ def test_mask_aware_leaves_background_untouched_without_init(setup):
     delta, _ = pgd_encoder_attack(enc, x, z_tgt, 16 / 255, 10, 0.125, mask=m)
     assert delta[:, :, :8, :].abs().max() == 0          # zero gradient outside the face
     assert delta[:, :, 8:24, 8:24].abs().max() > 0
+
+
+def test_objective_replaces_latent_loss_and_is_minimised(setup):
+    """E5 path: a generic per-image objective (here a tiny fake 'recognizer' cosine) goes down under PGD."""
+    enc, x, init = setup
+    torch.manual_seed(1)
+    rec = torch.nn.Sequential(torch.nn.Conv2d(3, 6, 4, stride=4), torch.nn.Flatten())
+    rec.requires_grad_(False)
+    ref = torch.nn.functional.normalize(rec(x), dim=1)
+
+    def obj(x_in):
+        return (torch.nn.functional.normalize(rec(x_in), dim=1) * ref).sum(1)
+
+    delta, hist = pgd_encoder_attack(None, x, None, 16 / 255, 30, 0.125, init, objective=obj)
+    assert delta.abs().max() <= 16 / 255 + 1e-6
+    assert hist.shape == (31, 2)
+    assert (obj(x + delta) < obj(x) - 1e-3).all()
+    assert torch.allclose(hist.min(0).values, obj(x + delta), atol=1e-5)   # best iterate is returned
+    with pytest.raises(ValueError):
+        pgd_encoder_attack(None, x, None, 16 / 255, 2, 0.125, objective=obj, untargeted=True)
+
+
+def test_identity_crop_and_boxes():
+    from facecloak.identity import crop, face_boxes
+    m = torch.zeros(2, 1, 64, 64)
+    m[0, :, 10:30, 20:40] = 1
+    boxes = face_boxes(m, margin=0.0)
+    assert torch.allclose(boxes[0], torch.tensor([20.0, 10.0, 40.0, 30.0]))
+    assert torch.allclose(boxes[1], torch.tensor([0.0, 0.0, 64.0, 64.0]))   # empty mask -> whole image
+    x = torch.rand(2, 3, 64, 64, requires_grad=True)
+    c = crop(x, boxes, 16)
+    assert c.shape == (2, 3, 16, 16)
+    c.sum().backward()
+    assert x.grad[0, :, 10:30, 20:40].abs().sum() > 0 and x.grad[0, :, 40:, :].abs().sum() == 0

@@ -1,0 +1,7 @@
+# C3 (combination of Phase 3/4 winners): E1 pattern target + E3 momentum PGD (best latent-only pair).
+# Not a single-change experiment: compare with each component's E* row and with E0.
+inherits: ../base.yaml
+exp_name: C3_pattern_momentum
+cloak:
+  target: assets/targets/pattern.png
+  momentum: 0.9

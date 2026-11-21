@@ -1,0 +1,15 @@
+# Phase 4: combinations (full runs)
+configs/experiments/C1_identity_momentum.yaml
+configs/experiments/C2_identity_maskaware.yaml
+configs/experiments/C3_pattern_momentum.yaml
+# Phase 4: robustness of E0 and E5 (attack-side changes reuse the base cloaks via a copied manifest)
+configs/experiments/E0_baseline.yaml exp_name=R_E0_prompts12 inpaint.prompt_ids=[1,2] inpaint.include_random=true 
+configs/experiments/E0_baseline.yaml exp_name=R_E0_seeds4 inpaint.seeds=[0,1,2,3] inpaint.include_random=true 
+configs/experiments/E0_baseline.yaml exp_name=R_E0_dilate10 mask.dilate_px=10 inpaint.include_random=true 
+configs/experiments/E0_baseline.yaml exp_name=R_E0_eps8 cloak.eps=[8,16] inpaint.include_random=true 
+configs/experiments/E0_baseline.yaml exp_name=R_E0_jpeg75 inpaint.jpeg_quality=75 inpaint.include_random=true 
+configs/experiments/E5_identity.yaml exp_name=R_E5_prompts12 inpaint.prompt_ids=[1,2] inpaint.include_random=true 
+configs/experiments/E5_identity.yaml exp_name=R_E5_seeds4 inpaint.seeds=[0,1,2,3] inpaint.include_random=true 
+configs/experiments/E5_identity.yaml exp_name=R_E5_dilate10 mask.dilate_px=10 inpaint.include_random=true 
+configs/experiments/E5_identity.yaml exp_name=R_E5_eps8 cloak.eps=[8,16] inpaint.include_random=true 
+configs/experiments/E5_identity.yaml exp_name=R_E5_jpeg75 inpaint.jpeg_quality=75 inpaint.include_random=true 

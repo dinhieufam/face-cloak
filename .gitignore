@@ -1,5 +1,6 @@
 # Experiment outputs (local runs; Colab writes to Google Drive)
-runs/
+runs
+
 
 # Python
 __pycache__/
@@ -23,3 +24,8 @@ venv/
 # Credentials
 kaggle.json
 .env
+
+# Local-only notes (Claude Code context, personal plan, server guide)
+CLAUDE.md
+docs/PLAN.md
+docs/vishc_server_guide.md
